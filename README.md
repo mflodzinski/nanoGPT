@@ -2,15 +2,17 @@
 
 A small PyTorch implementation of a GPT-style language model, inspired by Andrej Karpathy's nanoGPT and educational transformer walkthroughs.
 
-The repo contains a compact transformer model, a simple tokenizer/data loader, a YAML config, and a notebook for training on `data/input.txt` and generating text.
+The repo contains a compact transformer model, a simple tokenizer/data loader, a YAML config, and a notebook for training and generating text.
 
-## Structure
+## Dataset
 
-- `nano-gpt.ipynb` - notebook entry point for training and generation
-- `src/transformer.py` - transformer blocks, attention, training loop, and generation
-- `src/data.py` - dataset loading, tokenization, train/validation split, and batching
-- `config/config.yaml` - model, data, training, and generation settings
-- `data/input.txt` - training text
+The model trains on `data/input.txt`, a tiny Shakespeare-style text corpus with play dialogue.
+
+## Sample
+
+Generated imitation of Shakespeare-like text after training:
+
+![Generated Shakespeare-like text](assets/generated-shakespeare-sample.svg)
 
 ## Run
 
