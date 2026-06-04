@@ -100,12 +100,12 @@ class Transformer(nn.Module):
     def forward(self, x: Tensor, y: Tensor = None) -> Tuple[Tensor, Tensor]:
         B, T = x.shape
         tok_emb = self.token_embedding(x)
-        pos_emb = self.position_embeddig(torch.arange(T))
+        pos_emb = self.position_embeddig(torch.arange(T, device=x.device))
         x = tok_emb + pos_emb
         x = self.blocks(x)
         logits = self.lm_head(x)
 
-        if y != None:
+        if y is not None:
             logits = logits.view(-1, logits.shape[-1])
             y = y.view(-1)
             loss = F.cross_entropy(logits, y)
@@ -113,8 +113,12 @@ class Transformer(nn.Module):
             loss = None
         return logits, loss
 
-    def generate(self, max_new_tokens):
-        idx = torch.zeros((1, 1), dtype=torch.long)
+    def generate(self, max_new_tokens, idx: Tensor = None):
+        device = next(self.parameters()).device
+        if idx is None:
+            idx = torch.zeros((1, 1), dtype=torch.long, device=device)
+        else:
+            idx = idx.to(device)
         for _ in range(max_new_tokens):
             idx_cond = idx[:, -self.block_size :]
             logits, _ = self(idx_cond)
@@ -124,24 +128,34 @@ class Transformer(nn.Module):
             idx = torch.cat((idx, next_idx), dim=1)
         return idx
 
-    def train_model(self, data, optim, lr, epochs):
+    def train_model(self, data, optim, lr, epochs, log_every=500, eval_iters=100):
+        device = next(self.parameters()).device
         optimizer_class = getattr(torch.optim, optim)
         optimizer = optimizer_class(self.parameters(), lr=lr)
-        for _ in range(epochs):
+        for epoch in range(epochs):
             xb, yb = data.get_batch(data.train_data)
+            xb, yb = xb.to(device), yb.to(device)
             _, loss = self(xb, yb)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
+            if log_every and (epoch + 1) % log_every == 0:
+                train_loss, valid_loss = self.estimate_loss(data, eval_iters)
+                print(
+                    f"epoch {epoch + 1}/{epochs}: "
+                    f"train loss {train_loss:.4f}, valid loss {valid_loss:.4f}"
+                )
 
     @torch.no_grad()
-    def estimate_loss(self, data, epochs):
+    def estimate_loss(self, data, eval_iters):
+        device = next(self.parameters()).device
         out = []
         self.eval()
         for sub_data in [data.train_data, data.valid_data]:
-            losses = torch.zeros(epochs)
-            for i in range(epochs):
+            losses = torch.zeros(eval_iters)
+            for i in range(eval_iters):
                 X, Y = data.get_batch(sub_data)
+                X, Y = X.to(device), Y.to(device)
                 _, loss = self(X, Y)
                 losses[i] = loss.item()
             out.append(losses.mean())

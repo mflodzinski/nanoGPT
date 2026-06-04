@@ -13,7 +13,7 @@ class Tokenizer:
         return torch.tensor(indices, dtype=torch.long)
 
     def decode(self, indices: Tensor) -> str:
-        indices_list = indices.tolist()
+        indices_list = indices.detach().cpu().tolist()
         return "".join([self.itos[i] for i in indices_list])
 
 
@@ -28,7 +28,7 @@ class Data:
     ) -> None:
         torch.manual_seed(random_seed)
         self.data = self.read_file(file_path)
-        self.vocab = sorted(list(set(self.data.split())))
+        self.vocab = sorted(list(set(self.data)))
         self.vocab_size = len(self.vocab)
         self.tokenizer = Tokenizer(self.vocab)
         self.train_ratio = train_ratio
@@ -46,9 +46,9 @@ class Data:
             return f.read()
 
     def split_data(self) -> Tuple[str, str]:
-        split_index = int(len(self.data.split()) * self.train_ratio)
-        train_data = self.data.split()[:split_index]
-        validation_data = self.data.split()[split_index:]
+        split_index = int(len(self.data) * self.train_ratio)
+        train_data = self.data[:split_index]
+        validation_data = self.data[split_index:]
         return train_data, validation_data
 
     def get_batch(self, sub_data: Tensor) -> Tuple[Tensor, Tensor]:
