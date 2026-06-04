@@ -15,7 +15,6 @@ Tokenization is character-level, giving a vocabulary of 65 possible output token
 Generated imitation of Shakespeare-like text after training:
 
 ![Generated Shakespeare-like text](assets/generated-shakespeare-sample.svg)
-
 ## Run
 
 Install the main dependencies:
