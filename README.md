@@ -8,6 +8,8 @@ The repo contains a compact transformer model, a simple tokenizer/data loader, a
 
 The model trains on `data/input.txt`, a tiny Shakespeare-style text corpus with play dialogue.
 
+Tokenization is character-level, giving a vocabulary of 65 possible output tokens. The model's final language-model head therefore predicts one of 65 characters at each step.
+
 ## Sample
 
 Generated imitation of Shakespeare-like text after training:
